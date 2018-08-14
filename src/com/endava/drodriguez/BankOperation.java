@@ -1,5 +1,9 @@
 package com.endava.drodriguez;
 
+
+/**
+ * The transaction type that a client can make at the Bank Application
+ */
 public enum BankOperation {
     DEPOSITS(0),
     WITHDRAWALS(1),

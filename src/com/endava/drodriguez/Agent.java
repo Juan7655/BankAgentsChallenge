@@ -2,6 +2,10 @@ package com.endava.drodriguez;
 
 import java.util.concurrent.Callable;
 
+/**
+ * Bank employee attending one client at a time. Specifies a random attention time, receives the client and attends it,
+ * i.e. returning a response String
+ */
 public abstract class Agent implements Callable<String> {
 
     private Client client = null;

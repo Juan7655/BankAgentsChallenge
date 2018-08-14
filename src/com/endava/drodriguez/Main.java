@@ -4,8 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-
-
+/**
+ * Main process of the application. It creates the dispatcher, clients and relates them.
+ */
 public class Main {
 
     private static String[] names = {"Juan", "Laura", "David", "Tatiana", "Carlos", "Diana", "Camilo", "Ana", "Sebastián", "Margarita"};

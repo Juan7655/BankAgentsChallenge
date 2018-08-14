@@ -3,6 +3,10 @@ package com.endava.drodriguez;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * Responsible for creating new instances of Agents of the given type. It also creates lists of Agents
+ */
 public class AgentFactory {
 
     /**

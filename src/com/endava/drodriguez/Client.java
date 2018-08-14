@@ -1,5 +1,9 @@
 package com.endava.drodriguez;
 
+
+/**
+ * Data Class representing a Client to be attended in the bank. Has a name, id and an operation to execute in the bank.
+ */
 public class Client {
     private BankOperation bankOperation;
     private String name;
