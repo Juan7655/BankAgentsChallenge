@@ -13,7 +13,7 @@ public class Main {
 
     /**
      * creates a list of clients and the Dispatcher object, and send each client to the dispatcher to be attended.
-     * @param args
+     * @param args default arguments for main class
      */
     public static void main(String[] args) {
         List<Client> clients = createClients();

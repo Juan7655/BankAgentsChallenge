@@ -1,6 +1,8 @@
 package com.endava.drodriguez;
 
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -55,12 +57,11 @@ public class Dispatcher {
             return;
         }
 
-        agent.setClient(c);
-        Future<String> future = executor.submit(agent);
-        futures.add(future);
-//        CompletableFuture
-//                .supplyAsync(agent, executor)
-//                .thenAccept(System.out::println);
+
+        Agent finalAgent = agent.setClient(c);
+        futures.add(CompletableFuture
+                .supplyAsync(finalAgent::call, executor)
+                .thenApply(s -> s));
     }
 
     /**
@@ -73,7 +74,6 @@ public class Dispatcher {
         return agentList.stream()
                 .filter(agent -> agent.getClass().getSimpleName().equals(classType))
                 .filter(Agent::isAvailable)
-                .limit(1)
                 .findAny()
                 .orElse(null);
     }
@@ -83,23 +83,27 @@ public class Dispatcher {
      * For all the Futures in the waiting list, execute the process and print the result
      */
     void getAll() {
+        long init = Date.from(Instant.now()).getTime();
         for (Future<String> f : futures) {
             try {
                 System.out.println(f.get());
             } catch (InterruptedException | ExecutionException | NullPointerException e) {
-                //e.printStackTrace();
+                e.printStackTrace();
             }
         }
+        System.out.println(String.format("execution time:%ss", (Date.from(Instant.now()).getTime() - init) / 1000));
+        executor.shutdown();
     }
 
     /**
-     * closes the executor service.
+     * closes the executor service if it is still open with a timeout of 15 seconds.
      */
     public void closeExecutor() {
         try {
-            if (executor.awaitTermination(30000, TimeUnit.MILLISECONDS))
+            if (executor.awaitTermination(15000, TimeUnit.MILLISECONDS)) {
                 System.out.println("Process finished correctly");
-            else System.out.println("Process timeout reached");
+
+            } else System.out.println("Process timeout reached");
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
