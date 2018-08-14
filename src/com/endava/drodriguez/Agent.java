@@ -1,22 +1,24 @@
 package com.endava.drodriguez;
 
-import java.util.function.Supplier;
+import java.util.concurrent.Callable;
 
-public abstract class Agent implements Supplier<String> {
+public abstract class Agent implements Callable<String> {
 
-    String agentType;
-    private boolean available = true;
     private Client client = null;
+
 
     public void setClient(Client client) {
         this.client = client;
     }
 
+    /**
+     * States a random waiting time (sleep) and builds a response string
+     * @return Response String with agent type, and client attended
+     */
     @Override
-    public String get() {
-        this.available = false;
+    public String call() {
         if (this.client == null) return "No client was found :'v";
-        //time formula is equivalent to t=1000 * ((Math.random() * (15 - 10)) + 10)
+        //time formula is equivalent to t=1000 * ((r * (15 - 10)) + 10)
         long time = (long) (5000 * (Math.random() + 2));
 
         try {
@@ -25,13 +27,18 @@ public abstract class Agent implements Supplier<String> {
             System.out.println("Exception in Thread sleep " + e);
         }
 
+        String response = String.format("I'm a %s. Just finished attending customer %s, with name %s and Operation %s",
+                getClass().getSimpleName(), client.getId(), client.getName(), client.getBankOperation());
+
         this.client = null;
-        this.available = true;
-        return String.format("I'm a %s. Just finished attending customer %s, with name %s and Operation %s",
-                agentType, client.getId(), client.getName(), client.getBankOperation());
+        return response;
     }
 
+    /**
+     * Determines whether the agent can receive a new Client, or already has one (busy/free)
+     * @return availability of agent based on having or not a client assigned
+     */
     boolean isAvailable() {
-        return this.available;
+        return this.client == null;
     }
 }

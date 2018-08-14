@@ -11,10 +11,13 @@ public class Client {
         this.id = id;
     }
 
-    public Client(String name, int id) {
-        this.name = name;
-        this.id = id;
-        this.bankOperation = BankOperation.getRandomBankOperation();
+    /**
+     * Initializes Client object assigning a random operation
+     * @param id identifier of the Client in th system
+     * @param name of the given client
+     */
+    public Client(int id, String name) {
+        this(id, name, BankOperation.getRandomBankOperation());
     }
 
     public BankOperation getBankOperation() {

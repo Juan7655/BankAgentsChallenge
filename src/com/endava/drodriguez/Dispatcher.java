@@ -2,27 +2,28 @@ package com.endava.drodriguez;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
+/**
+ * Singleton class to manage Client attention. Creates a multi-threaded pool, assigning a client to an available
+ * Bank Agent and executing all the processes.
+ */
 public class Dispatcher {
     private static Dispatcher instance;
     private List<Agent> agentList;
     private ExecutorService executor;
+    private List<Future<String>> futures = new ArrayList<>();
 
+    /**
+     * Creates the ExecutorService for the class, and creates a list with all the available Agents.
+     */
     private Dispatcher() {
         agentList = new ArrayList<>();
-        executor = Executors.newFixedThreadPool(20);
-        for (int i = 0; i < 3; i++)
-            agentList.add(new Cashier());
+        executor = Executors.newFixedThreadPool(10);
 
-        for (int i = 0; i < 2; i++)
-            agentList.add(new Supervisor());
-
-        for (int i = 0; i < 1; i++)
-            agentList.add(new Director());
+        agentList.addAll(AgentFactory.getAgentList("Cashier", 6));
+        agentList.addAll(AgentFactory.getAgentList("Supervisor", 3));
+        agentList.addAll(AgentFactory.getAgentList("Director", 1));
 
     }
 
@@ -33,30 +34,21 @@ public class Dispatcher {
         return instance;
     }
 
+    /**
+     * Assigns an input client to an available Bank Agent; then creates a Future and includes it in a list of Future
+     * to be completed.
+     *
+     * @param c client to be attended
+     */
     public void attend(Client c) {
         Agent agent;
-        agent = agentList.stream()
-                .filter(agentItem -> agentItem instanceof Cashier)
-                .filter(Agent::isAvailable)
-                .limit(1)
-                .findAny()
-                .orElse(null);
+        agent = getAgent("Cashier");
 
         if (agent == null)
-            agent = agentList.stream()
-                    .filter(agentItem -> agentItem instanceof Supervisor)
-                    .filter(Agent::isAvailable)
-                    .limit(1)
-                    .findAny()
-                    .orElse(null);
+            agent = getAgent("Supervisor");
 
         if (agent == null)
-            agent = agentList.stream()
-                    .filter(agentItem -> agentItem instanceof Director)
-                    .filter(Agent::isAvailable)
-                    .limit(1)
-                    .findAny()
-                    .orElse(null);
+            agent = getAgent("Director");
 
         if (agent == null) {
             System.out.println("No se pudo atender al cliente. Todos los agentes se encuentran ocupados");
@@ -64,20 +56,53 @@ public class Dispatcher {
         }
 
         agent.setClient(c);
-        CompletableFuture
-                .supplyAsync(agent, executor)
-                .thenAccept(System.out::println);
-
+        Future<String> future = executor.submit(agent);
+        futures.add(future);
+//        CompletableFuture
+//                .supplyAsync(agent, executor)
+//                .thenAccept(System.out::println);
     }
 
+    /**
+     * Searches the Agent pool for an available Agent of the type given
+     *
+     * @param classType class type of the agent to return if available
+     * @return available agent of the given type from the agent pool
+     */
+    private Agent getAgent(String classType) {
+        return agentList.stream()
+                .filter(agent -> agent.getClass().getSimpleName().equals(classType))
+                .filter(Agent::isAvailable)
+                .limit(1)
+                .findAny()
+                .orElse(null);
+    }
+
+
+    /**
+     * For all the Futures in the waiting list, execute the process and print the result
+     */
+    void getAll() {
+        for (Future<String> f : futures) {
+            try {
+                System.out.println(f.get());
+            } catch (InterruptedException | ExecutionException | NullPointerException e) {
+                //e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * closes the executor service.
+     */
     public void closeExecutor() {
         try {
-            if(executor.awaitTermination(30000, TimeUnit.MILLISECONDS))
+            if (executor.awaitTermination(30000, TimeUnit.MILLISECONDS))
                 System.out.println("Process finished correctly");
             else System.out.println("Process timeout reached");
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }finally {
+        } finally {
             executor.shutdown();
         }
     }
