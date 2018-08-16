@@ -1,13 +1,13 @@
 package com.endava.drodriguez;
 
+import java.util.Observable;
 import java.util.concurrent.Callable;
-import java.util.function.Supplier;
 
 /**
  * Bank employee attending one client at a time. Specifies a random attention time, receives the client and attends it,
  * i.e. returning a response String
  */
-public abstract class Agent implements Callable<String>{
+public abstract class Agent extends Observable implements Callable<String>{
 
     private Client client = null;
 
@@ -23,6 +23,7 @@ public abstract class Agent implements Callable<String>{
      */
     @Override
     public String call() {
+        System.out.println("Iniciando atención");
         if (this.client == null) return "No client was found :'v";
         //time formula is equivalent to t=1000 * ((r * (15 - 10)) + 10)
         long time = (long) (5000 * (Math.random() + 2));
@@ -37,6 +38,8 @@ public abstract class Agent implements Callable<String>{
                 getClass().getSimpleName(), client.getId(), client.getName(), client.getBankOperation(), time);
 
         this.client = null;
+        setChanged();
+        notifyObservers("hola");
         return response;
     }
 

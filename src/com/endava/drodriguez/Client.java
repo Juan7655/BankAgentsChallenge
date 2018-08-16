@@ -1,10 +1,12 @@
 package com.endava.drodriguez;
 
 
+import java.util.Observable;
+
 /**
  * Data Class representing a Client to be attended in the bank. Has a name, id and an operation to execute in the bank.
  */
-public class Client {
+public class Client extends Observable {
     private BankOperation bankOperation;
     private String name;
     private int id;

@@ -19,9 +19,8 @@ public class Main {
         List<Client> clients = createClients();
         Dispatcher d = Dispatcher.getInstance();
 
-        clients.forEach(d::attend);
 
-        d.getAll();
+        clients.forEach(d::attend);
         d.closeExecutor();
     }
 
@@ -32,8 +31,8 @@ public class Main {
     private static List<Client> createClients() {
         List<Client> clients = new ArrayList<>();
 
-        for (int i = 0; i < 10; i++)
-            clients.add(new Client(i, names[i]));
+        for (int i = 0; i < 30; i++)
+            clients.add(new Client(i, names[i%10]));
 
         return clients;
     }

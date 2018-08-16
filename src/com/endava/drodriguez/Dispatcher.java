@@ -1,32 +1,30 @@
 package com.endava.drodriguez;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.Comparator;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.PriorityQueue;
 import java.util.concurrent.*;
 
 /**
  * Singleton class to manage Client attention. Creates a multi-threaded pool, assigning a client to an available
  * Bank Agent and executing all the processes.
  */
-public class Dispatcher {
+public class Dispatcher implements Observer {
     private static Dispatcher instance;
-    private List<Agent> agentList;
+    long time;
+    private PriorityQueue<Agent> agentList = new PriorityQueue<>(new AgentComparator());
     private ExecutorService executor;
-    private List<Future<String>> futures = new ArrayList<>();
+    private BlockingQueue<Client> queue = new ArrayBlockingQueue<>(10);
 
     /**
      * Creates the ExecutorService for the class, and creates a list with all the available Agents.
      */
     private Dispatcher() {
-        agentList = new ArrayList<>();
-        executor = Executors.newFixedThreadPool(10);
-
-        agentList.addAll(AgentFactory.getAgentList("Cashier", 6));
-        agentList.addAll(AgentFactory.getAgentList("Supervisor", 3));
-        agentList.addAll(AgentFactory.getAgentList("Director", 1));
-
+        startExecutor();
+        agentList.addAll(AgentFactory.getAgentList(this, AgentFactory.AgentType.SUPERVISOR, 3));
+        agentList.addAll(AgentFactory.getAgentList(this, AgentFactory.AgentType.DIRECTOR, 1));
+        agentList.addAll(AgentFactory.getAgentList(this, AgentFactory.AgentType.CASHIER, 6));
     }
 
     public static Dispatcher getInstance() {
@@ -36,63 +34,9 @@ public class Dispatcher {
         return instance;
     }
 
-    /**
-     * Assigns an input client to an available Bank Agent; then creates a Future and includes it in a list of Future
-     * to be completed.
-     *
-     * @param c client to be attended
-     */
-    public void attend(Client c) {
-        Agent agent;
-        agent = getAgent("Cashier");
-
-        if (agent == null)
-            agent = getAgent("Supervisor");
-
-        if (agent == null)
-            agent = getAgent("Director");
-
-        if (agent == null) {
-            System.out.println("No se pudo atender al cliente. Todos los agentes se encuentran ocupados");
-            return;
-        }
-
-
-        Agent finalAgent = agent.setClient(c);
-        futures.add(CompletableFuture
-                .supplyAsync(finalAgent::call, executor)
-                .thenApply(s -> s));
-    }
-
-    /**
-     * Searches the Agent pool for an available Agent of the type given
-     *
-     * @param classType class type of the agent to return if available
-     * @return available agent of the given type from the agent pool
-     */
-    private Agent getAgent(String classType) {
-        return agentList.stream()
-                .filter(agent -> agent.getClass().getSimpleName().equals(classType))
-                .filter(Agent::isAvailable)
-                .findAny()
-                .orElse(null);
-    }
-
-
-    /**
-     * For all the Futures in the waiting list, execute the process and print the result
-     */
-    void getAll() {
-        long init = Date.from(Instant.now()).getTime();
-        for (Future<String> f : futures) {
-            try {
-                System.out.println(f.get());
-            } catch (InterruptedException | ExecutionException | NullPointerException e) {
-                e.printStackTrace();
-            }
-        }
-        System.out.println(String.format("execution time:%ss", (Date.from(Instant.now()).getTime() - init) / 1000));
-        executor.shutdown();
+    private void startExecutor() {
+        executor = Executors.newFixedThreadPool(10);
+        time = System.currentTimeMillis();
     }
 
     /**
@@ -100,14 +44,75 @@ public class Dispatcher {
      */
     public void closeExecutor() {
         try {
-            if (executor.awaitTermination(15000, TimeUnit.MILLISECONDS)) {
+            if (executor.awaitTermination(150000, TimeUnit.MILLISECONDS))
                 System.out.println("Process finished correctly");
-
-            } else System.out.println("Process timeout reached");
+            else System.out.println("Process timeout reached");
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
             executor.shutdown();
+            System.out.println("Run time: " + (System.currentTimeMillis() - time));
+            time = 0;
+        }
+    }
+
+    public void attend(Client client) {
+        if (executor.isShutdown())
+            startExecutor();
+        try {
+            queue.put(client);
+            if (queue.size() == 10)
+                startAttention();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void update(Observable o, Object arg) {
+        if (o instanceof Agent)
+            agentList.add((Agent) o);
+        if (queue.size() > 0)
+            startAttention();
+        else {
+            executor.shutdown();
+            System.out.println("Run time: " + (System.currentTimeMillis() - time));
+            time = 0;
+        }
+
+    }
+
+    public void startAttention() {
+        int availableAgentsCount = agentList.size(),
+                clientsCount = queue.size();
+
+        for (int i = 0; i < Math.min(availableAgentsCount, clientsCount); i++) {
+            final Agent agent = agentList.poll();
+            if (agent == null)
+                return;
+
+            agent.setClient(queue.poll());
+
+            CompletableFuture
+                    .supplyAsync(agent::call, executor)
+                    .thenAccept(System.out::println);
+        }
+    }
+
+    /**
+     * Compares the Agents by the level of responsibility. That is, the Cashiers have the first use priority, the
+     * Supervisors are next, and at last, the Directors.
+     */
+    private class AgentComparator implements Comparator<Agent> {
+        @Override
+        public int compare(Agent o1, Agent o2) {
+            int firstAgentLevel, secondAgentLevel;
+            String firstAgentType = o1.getClass().getSimpleName(),
+                    secondAgentType = o2.getClass().getSimpleName();
+            firstAgentLevel = firstAgentType.equals("Cashier") ? 3 : (firstAgentType.equals("Supervisor") ? 2 : 1);
+            secondAgentLevel = secondAgentType.equals("Cashier") ? 3 : (secondAgentType.equals("Supervisor") ? 2 : 1);
+
+            return secondAgentLevel - firstAgentLevel;
         }
     }
 }
