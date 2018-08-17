@@ -13,6 +13,7 @@ public class Main {
 
     /**
      * Creates a list of clients and the Dispatcher object, and send each client to the dispatcher to be attended.
+     *
      * @param args default arguments for main class
      */
     public static void main(String[] args) {
@@ -24,13 +25,14 @@ public class Main {
 
     /**
      * Creates a list of clients
+     *
      * @return new list with Client objects
      */
     private static List<Client> createClients() {
         List<Client> clients = new ArrayList<>();
 
-        for (int i = 0; i < 3000; i++)
-            clients.add(new Client(i, names[i%names.length]));
+        for (int i = 0; i < 200; i++)
+            clients.add(new Client(i, names[i % names.length]));
 
         return clients;
     }

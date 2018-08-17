@@ -2,7 +2,6 @@ package com.endava.drodriguez;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Observer;
 
 
 /**
@@ -12,10 +11,11 @@ public class AgentFactory {
 
     /**
      * Creates a new agent from the given type and relates the Dispatcher as the Observer object.
+     *
      * @param agentType type of agent describing expected class of agent
      * @return new instance of the type of agent specified
      */
-    public static Agent getAgent(Observer o, AgentType agentType) {
+    public static Agent getAgent(Agent.OnAgentAvailabilityChangedListener listener, AgentType agentType) {
         Agent agent;
         switch (agentType) {
             case CASHIER:
@@ -31,27 +31,27 @@ public class AgentFactory {
                 return null;
         }
 
-        agent.addObserver(o);
+        agent.addListener(listener);
         return agent;
     }
 
     /**
      * Creates a list of agents of specific type
-     * @param o Observer object responsible of handling Agent availability
+     *
+     * @param listener  Observer object responsible of handling Agent availability
      * @param agentType Concrete class of agents to return in list
-     * @param listSize List size, or listSize of agents to return
+     * @param listSize  List size, or listSize of agents to return
      * @return List with new instances of Agents, all with same concrete type of Agent
-
      */
-    public static List<Agent> getAgentList(Observer o, AgentType agentType, int listSize) {
+    public static List<Agent> getAgentList(Agent.OnAgentAvailabilityChangedListener listener, AgentType agentType, int listSize) {
         List<Agent> agentList = new ArrayList<>();
 
         for (int i = 0; i < listSize; i++)
-            agentList.add(getAgent(o, agentType));
+            agentList.add(getAgent(listener, agentType));
         return agentList;
     }
 
-    enum AgentType{
+    enum AgentType {
         CASHIER, SUPERVISOR, DIRECTOR
     }
 
