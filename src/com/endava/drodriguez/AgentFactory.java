@@ -11,8 +11,8 @@ import java.util.Observer;
 public class AgentFactory {
 
     /**
-     * used to create a new agent from the given type
-     * @param agentType string describing expected class of agent
+     * Creates a new agent from the given type and relates the Dispatcher as the Observer object.
+     * @param agentType type of agent describing expected class of agent
      * @return new instance of the type of agent specified
      */
     public static Agent getAgent(Observer o, AgentType agentType) {
@@ -30,15 +30,18 @@ public class AgentFactory {
             default:
                 return null;
         }
+
         agent.addObserver(o);
         return agent;
     }
 
     /**
-     * creates a list of agents of specific type
-     * @param agentType concrete class of agents to return in list
-     * @param listSize list size, or listSize of agents to return
-     * @return list with new instances of Agents, all with same concrete type of Agent
+     * Creates a list of agents of specific type
+     * @param o Observer object responsible of handling Agent availability
+     * @param agentType Concrete class of agents to return in list
+     * @param listSize List size, or listSize of agents to return
+     * @return List with new instances of Agents, all with same concrete type of Agent
+
      */
     public static List<Agent> getAgentList(Observer o, AgentType agentType, int listSize) {
         List<Agent> agentList = new ArrayList<>();

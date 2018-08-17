@@ -12,16 +12,14 @@ public class Main {
     private static String[] names = {"Juan", "Laura", "David", "Tatiana", "Carlos", "Diana", "Camilo", "Ana", "Sebastián", "Margarita"};
 
     /**
-     * creates a list of clients and the Dispatcher object, and send each client to the dispatcher to be attended.
+     * Creates a list of clients and the Dispatcher object, and send each client to the dispatcher to be attended.
      * @param args default arguments for main class
      */
     public static void main(String[] args) {
         List<Client> clients = createClients();
         Dispatcher d = Dispatcher.getInstance();
 
-
         clients.forEach(d::attend);
-        d.closeExecutor();
     }
 
     /**
@@ -31,8 +29,8 @@ public class Main {
     private static List<Client> createClients() {
         List<Client> clients = new ArrayList<>();
 
-        for (int i = 0; i < 30; i++)
-            clients.add(new Client(i, names[i%10]));
+        for (int i = 0; i < 3000; i++)
+            clients.add(new Client(i, names[i%names.length]));
 
         return clients;
     }
