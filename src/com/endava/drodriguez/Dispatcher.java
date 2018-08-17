@@ -1,8 +1,6 @@
 package com.endava.drodriguez;
 
 import java.util.Comparator;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.PriorityQueue;
 import java.util.concurrent.*;
 
@@ -10,14 +8,22 @@ import java.util.concurrent.*;
  * Singleton class to manage Client attention. Creates a multi-threaded pool, assigning a client to an available
  * Bank Agent and executing all the processes.
  */
-public class Dispatcher implements Observer {
-    /** Singleton instance (static) of the Dispatcher class */
+public class Dispatcher implements Agent.OnAgentAvailabilityChangedListener {
+    /**
+     * Singleton instance (static) of the Dispatcher class
+     */
     private static Dispatcher instance;
-    /** List of agents ordered with priority. First to be busy are cashiers, then supervisors and finally directors */
+    /**
+     * List of agents ordered with priority. First to be busy are cashiers, then supervisors and finally directors
+     */
     private PriorityQueue<Agent> agentList = new PriorityQueue<>(new AgentComparator());
-    /** Executor service to create the Thread pool */
+    /**
+     * Executor service to create the Thread pool
+     */
     private ExecutorService executor;
-    /** Queue of clients blocked by maximum capacity */
+    /**
+     * Queue of clients blocked by maximum capacity
+     */
     private BlockingQueue<Client> clients = new ArrayBlockingQueue<>(10);
 
     /**
@@ -25,8 +31,8 @@ public class Dispatcher implements Observer {
      */
     private Dispatcher() {
         agentList.addAll(AgentFactory.getAgentList(this, AgentFactory.AgentType.SUPERVISOR, 3));
-        agentList.addAll(AgentFactory.getAgentList(this, AgentFactory.AgentType.DIRECTOR, 10));
-        agentList.addAll(AgentFactory.getAgentList(this, AgentFactory.AgentType.CASHIER, 60));
+        agentList.addAll(AgentFactory.getAgentList(this, AgentFactory.AgentType.DIRECTOR, 1));
+        agentList.addAll(AgentFactory.getAgentList(this, AgentFactory.AgentType.CASHIER, 6));
     }
 
     public static Dispatcher getInstance() {
@@ -41,7 +47,7 @@ public class Dispatcher implements Observer {
      * the Thread pool.
      */
     private void startExecutor() {
-        executor = Executors.newFixedThreadPool(100);
+        executor = Executors.newFixedThreadPool(10);
     }
 
     /**
@@ -55,26 +61,23 @@ public class Dispatcher implements Observer {
             startExecutor();
         try {
             clients.put(client);
-            if (clients.size() == 10)
-                startAttention();
+            startAttention();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
 
     /**
-     * Called when the Observed object (Agents) become available. When the Agents finish the Client processing, each
-     * notify the Dispatcher that they are available, and the Dispatcher adds them again to the Agents PriorityQueue
+     * Called when the given Agent becomes available. Whenever an Agent finishes the Client processing, it
+     * notifies the Dispatcher that it became available, and the Dispatcher adds it again to the Agents PriorityQueue
      * ready to attend new clients.
      *
-     * @param o   The object observed. Represents the Agent that has finishedits process and is available to attend
-     *            another client.
-     * @param arg Any argument returned by the Observable. Default parameter. Not in use.
+     * @param agent The agent listened to. Represents the Agent that has finished its process and is available to attend
+     *              another client.
      */
     @Override
-    public void update(Observable o, Object arg) {
-        if (o instanceof Agent)
-            agentList.add((Agent) o);
+    public void onAgentAvailabilityChanged(Agent agent) {
+        agentList.add(agent);
         if (clients.size() > 0)
             startAttention();
         else executor.shutdown();
