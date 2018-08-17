@@ -9,6 +9,10 @@ import java.util.concurrent.Callable;
  */
 public abstract class Agent extends Observable implements Callable<String> {
 
+    /**
+     * Client to be attended, one at a time. If null, then the Agent is available and can be assign a new client,
+     * otherwise, considered busy
+     */
     private Client client = null;
 
 

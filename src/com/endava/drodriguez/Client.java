@@ -7,8 +7,11 @@ import java.util.Observable;
  * Data Class representing a Client to be attended in the bank. Has a name, id and an operation to execute in the bank.
  */
 public class Client extends Observable {
+    /** Operation to execute at the Bank */
     private BankOperation bankOperation;
+    /** Name of the client to be attended */
     private String name;
+    /** Identifier of the client */
     private int id;
 
     public Client(int id, String name, BankOperation bankOperation) {

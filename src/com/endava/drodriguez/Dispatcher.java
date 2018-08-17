@@ -11,10 +11,13 @@ import java.util.concurrent.*;
  * Bank Agent and executing all the processes.
  */
 public class Dispatcher implements Observer {
+    /** Singleton instance (static) of the Dispatcher class */
     private static Dispatcher instance;
-    private long time;
+    /** List of agents ordered with priority. First to be busy are cashiers, then supervisors and finally directors */
     private PriorityQueue<Agent> agentList = new PriorityQueue<>(new AgentComparator());
+    /** Executor service to create the Thread pool */
     private ExecutorService executor;
+    /** Queue of clients blocked by maximum capacity */
     private BlockingQueue<Client> clients = new ArrayBlockingQueue<>(10);
 
     /**
@@ -39,7 +42,6 @@ public class Dispatcher implements Observer {
      */
     private void startExecutor() {
         executor = Executors.newFixedThreadPool(100);
-        time = System.currentTimeMillis();
     }
 
     /**
@@ -75,11 +77,7 @@ public class Dispatcher implements Observer {
             agentList.add((Agent) o);
         if (clients.size() > 0)
             startAttention();
-        else {
-            executor.shutdown();
-            System.out.println("Run time: " + (System.currentTimeMillis() - time));
-            time = 0;
-        }
+        else executor.shutdown();
 
     }
 
