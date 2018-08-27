@@ -1,6 +1,8 @@
 package com.endava.drodriguez;
 
 
+import io.vavr.collection.Stream;
+
 /**
  * The transaction type that a client can make at the Bank Application
  */
@@ -31,10 +33,6 @@ public enum BankOperation {
      * @return BankOperation given its id
      */
     public static BankOperation getBankOperationById(int id) {
-        for (BankOperation o : BankOperation.values())
-            if (o.id == id) return o;
-        return null;
+        return Stream.of(BankOperation.values()).filter(b -> b.id == id).getOrElse(DEPOSITS);
     }
-
-
 }

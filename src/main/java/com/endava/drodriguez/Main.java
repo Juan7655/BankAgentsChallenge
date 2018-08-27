@@ -1,7 +1,6 @@
 package com.endava.drodriguez;
 
-import java.util.ArrayList;
-import java.util.List;
+import io.vavr.collection.List;
 
 
 /**
@@ -9,7 +8,7 @@ import java.util.List;
  */
 public class Main {
 
-    private static String[] names = {"Juan", "Laura", "David", "Tatiana", "Carlos", "Diana", "Camilo", "Ana", "Sebastián", "Margarita"};
+    private static String[] names = {"Juan", "Laura", "David", "Tatiana", "Carlos", "Diana", "Camilo", "Ana", "Sebastian", "Margarita"};
 
     /**
      * Creates a list of clients and the Dispatcher object, and send each client to the dispatcher to be attended.
@@ -17,10 +16,8 @@ public class Main {
      * @param args default arguments for main class
      */
     public static void main(String[] args) {
-        List<Client> clients = createClients();
         Dispatcher d = Dispatcher.getInstance();
-
-        clients.forEach(d::attend);
+        createClients().forEach(d::attend);
     }
 
     /**
@@ -29,11 +26,6 @@ public class Main {
      * @return new list with Client objects
      */
     private static List<Client> createClients() {
-        List<Client> clients = new ArrayList<>();
-
-        for (int i = 0; i < 200; i++)
-            clients.add(new Client(i, names[i % names.length]));
-
-        return clients;
+        return List.range(0, 20).map(i -> new Client(i, names[i % names.length]));
     }
 }
