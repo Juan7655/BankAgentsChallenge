@@ -10,7 +10,6 @@ import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.IntStream;
 
 /**
  * Singleton class to manage Client attention. Creates a multi-threaded pool, assigning a client to an available
@@ -43,9 +42,9 @@ public class Dispatcher implements Agent.OnAgentAvailableListener {
     private Dispatcher() {
         AgentFactory factory = new AgentFactory();
 
-        int[] agentNumber = IntStream.of(6, 3, 1).toArray();
+        List<Integer> agentNumber = List.of(6, 3, 1);
         this.agentList = this.agentList.enqueueAll(List.of(0, 1, 2)
-                .map(n -> factory.getAgentList(this, AgentType.agentTypeFromId(n), agentNumber[n]))
+                .map(n -> factory.getAgentList(this, AgentType.agentTypeFromId(n), agentNumber.get(n)))
                 .flatMap(s -> s));
 
         this.executor = Executors.newFixedThreadPool(10);
@@ -112,7 +111,7 @@ public class Dispatcher implements Agent.OnAgentAvailableListener {
      */
     public void startAttention() {
         int minAttentionCalls = Math.min(this.agentList.size(), this.clients.size());
-        IntStream.range(0, minAttentionCalls)
+        List.range(0, minAttentionCalls)
                 .forEach(i -> CompletableFuture
                         .supplyAsync(Option.of(pollAgent()).get().setClient(pollClient())::call, this.executor)
                         .thenApply(Option::get)
